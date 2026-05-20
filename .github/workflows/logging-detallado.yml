@@ -1,0 +1,117 @@
+# =============================================================================
+# Laboratorio 5 - Parte 4: Logging Detallado
+# Workflow con logging verbose para diagnóstico
+# =============================================================================
+
+name: "Lab5 - Logging Detallado"
+
+on:
+  workflow_dispatch:
+
+# Activar logging detallado mediante variables de entorno
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
+
+jobs:
+  # -------------------------------------------------------
+  # Job de diagnóstico con logging verbose
+  # -------------------------------------------------------
+  diagnostico-verbose:
+    name: "🔍 Diagnóstico con Logging Verbose"
+    runs-on: [self-hosted, windows, lab5]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Información detallada del entorno
+        run: |
+          echo "=========================================="
+          echo "🔍 DIAGNÓSTICO DETALLADO DEL RUNNER"
+          echo "=========================================="
+          echo ""
+          echo "--- Variables de Entorno del Runner ---"
+          echo "RUNNER_NAME: $env:RUNNER_NAME"
+          echo "RUNNER_OS: $env:RUNNER_OS"
+          echo "RUNNER_ARCH: $env:RUNNER_ARCH"
+          echo "RUNNER_TEMP: $env:RUNNER_TEMP"
+          echo "RUNNER_TOOL_CACHE: $env:RUNNER_TOOL_CACHE"
+          echo ""
+          echo "--- Variables de GitHub ---"
+          echo "GITHUB_WORKFLOW: $env:GITHUB_WORKFLOW"
+          echo "GITHUB_RUN_ID: $env:GITHUB_RUN_ID"
+          echo "GITHUB_RUN_NUMBER: $env:GITHUB_RUN_NUMBER"
+          echo "GITHUB_ACTION: $env:GITHUB_ACTION"
+          echo "GITHUB_WORKSPACE: $env:GITHUB_WORKSPACE"
+          echo ""
+          echo "--- Sistema ---"
+          echo "Hostname: $env:COMPUTERNAME"
+          echo "User: $env:USERNAME"
+          echo "OS: $((Get-CimInstance Win32_OperatingSystem).Caption)"
+          echo "PowerShell: $($PSVersionTable.PSVersion)"
+          echo ""
+          echo "--- Debug Activo ---"
+          echo "ACTIONS_RUNNER_DEBUG: $env:ACTIONS_RUNNER_DEBUG"
+          echo "ACTIONS_STEP_DEBUG: $env:ACTIONS_STEP_DEBUG"
+          echo "=========================================="
+        shell: pwsh
+
+      - name: Test de conectividad
+        run: |
+          echo "🌐 Verificando conectividad..."
+          echo ""
+          echo "DNS Resolution:"
+          Resolve-DnsName github.com | Format-Table -AutoSize
+          echo ""
+          echo "Conexión a GitHub API:"
+          try {
+            $response = Invoke-WebRequest -Uri "https://api.github.com" -UseBasicParsing -TimeoutSec 10
+            echo "✅ GitHub API accesible - Status: $($response.StatusCode)"
+          } catch {
+            echo "❌ Error conectando a GitHub API: $_"
+          }
+          echo ""
+          echo "Conexión a GitHub Actions:"
+          try {
+            $response = Invoke-WebRequest -Uri "https://github.com" -UseBasicParsing -TimeoutSec 10
+            echo "✅ GitHub accesible - Status: $($response.StatusCode)"
+          } catch {
+            echo "❌ Error conectando a GitHub: $_"
+          }
+        shell: pwsh
+
+      - name: Verificar recursos del sistema
+        run: |
+          echo "💻 Recursos del Sistema:"
+          echo ""
+          echo "--- CPU ---"
+          Get-CimInstance Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors | Format-Table -AutoSize
+          echo ""
+          echo "--- Memoria ---"
+          $os = Get-CimInstance Win32_OperatingSystem
+          $totalMB = [math]::Round($os.TotalVisibleMemorySize / 1024, 2)
+          $freeMB = [math]::Round($os.FreePhysicalMemory / 1024, 2)
+          $usedMB = $totalMB - $freeMB
+          echo "Total: ${totalMB} MB"
+          echo "Usado: ${usedMB} MB"
+          echo "Libre: ${freeMB} MB"
+          echo ""
+          echo "--- Disco ---"
+          Get-PSDrive -PSProvider FileSystem | Select-Object Name, @{N='UsedGB';E={[math]::Round($_.Used/1GB,2)}}, @{N='FreeGB';E={[math]::Round($_.Free/1GB,2)}} | Format-Table -AutoSize
+        shell: pwsh
+
+      - name: Simular error para ver logging
+        run: |
+          echo "⚠️ Simulando operación que genera warnings..."
+          echo "::warning::Este es un warning de ejemplo para ver el formato de logging"
+          echo "::notice::Este es un notice informativo"
+          echo ""
+          echo "📝 Generando grupo de logs:"
+          echo "::group::Detalles de configuración"
+          echo "config_key_1=value_1"
+          echo "config_key_2=value_2"
+          echo "config_key_3=value_3"
+          echo "::endgroup::"
+          echo ""
+          echo "✅ Logging detallado completado"
+        shell: pwsh

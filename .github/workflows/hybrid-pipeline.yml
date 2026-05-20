@@ -1,0 +1,160 @@
+# =============================================================================
+# Laboratorio 5 - Parte 2: Workflow Híbrido
+# Este pipeline ejecuta jobs tanto en runners hosted (GitHub) como self-hosted
+# =============================================================================
+
+name: "Lab5 - Pipeline Híbrido"
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:  # Permite ejecución manual
+
+jobs:
+  # -------------------------------------------------------
+  # Job 1: Ejecuta en runner HOSTED (GitHub)
+  # Realiza checkout, validación y build
+  # -------------------------------------------------------
+  build-hosted:
+    name: "🏗️ Build (GitHub Hosted)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Información del runner
+        run: |
+          echo "=========================================="
+          echo "📌 RUNNER HOSTED (GitHub)"
+          echo "=========================================="
+          echo "Runner Name: ${{ runner.name }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner Arch: ${{ runner.arch }}"
+          echo "Workspace: ${{ github.workspace }}"
+          echo "=========================================="
+
+      - name: Validar estructura del proyecto
+        run: |
+          echo "🔍 Validando estructura del proyecto..."
+          ls -la
+          echo ""
+          echo "📁 Verificando directorios necesarios..."
+          test -d ".github/workflows" && echo "✅ .github/workflows existe" || echo "❌ .github/workflows no encontrado"
+          test -d "scripts" && echo "✅ scripts/ existe" || echo "❌ scripts/ no encontrado"
+          echo ""
+          echo "✅ Validación completada exitosamente"
+
+      - name: Simular build
+        run: |
+          echo "🏗️ Iniciando proceso de build..."
+          echo "Compilando módulos..."
+          sleep 2
+          echo "Ejecutando tests unitarios..."
+          sleep 1
+          echo "Generando artefactos..."
+          echo "build_version=$(date +%Y%m%d%H%M%S)" >> build_info.txt
+          echo "build_runner=${{ runner.name }}" >> build_info.txt
+          echo "build_status=success" >> build_info.txt
+          cat build_info.txt
+          echo ""
+          echo "✅ Build completado exitosamente en runner HOSTED"
+
+      - name: Subir artefacto de build
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-info
+          path: build_info.txt
+
+  # -------------------------------------------------------
+  # Job 2: Ejecuta en runner SELF-HOSTED (infraestructura propia)
+  # Realiza despliegue y tests en infraestructura local
+  # -------------------------------------------------------
+  deploy-selfhosted:
+    name: "🖥️ Deploy (Self-Hosted)"
+    runs-on: [self-hosted, windows, lab5]
+    needs: build-hosted
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Descargar artefacto de build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-info
+
+      - name: Información del runner self-hosted
+        run: |
+          echo "=========================================="
+          echo "📌 RUNNER SELF-HOSTED (Infraestructura propia)"
+          echo "=========================================="
+          echo "Runner Name: ${{ runner.name }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner Arch: ${{ runner.arch }}"
+          echo "Workspace: ${{ github.workspace }}"
+          echo "Computer Name: $env:COMPUTERNAME"
+          echo "User: $env:USERNAME"
+          echo "=========================================="
+        shell: pwsh
+
+      - name: Verificar entorno local
+        run: |
+          echo "🔍 Verificando entorno de infraestructura propia..."
+          echo ""
+          echo "Sistema Operativo:"
+          systeminfo | Select-String "OS Name","OS Version"
+          echo ""
+          echo "Espacio en disco:"
+          Get-PSDrive C | Select-Object Used,Free | Format-Table -AutoSize
+          echo ""
+          echo "Memoria disponible:"
+          Get-CimInstance Win32_OperatingSystem | Select-Object TotalVisibleMemorySize,FreePhysicalMemory | Format-Table -AutoSize
+          echo ""
+          echo "✅ Entorno local verificado correctamente"
+        shell: pwsh
+
+      - name: Simular despliegue en infraestructura local
+        run: |
+          echo "🚀 Iniciando despliegue en infraestructura propia..."
+          echo ""
+          echo "📋 Leyendo información de build:"
+          Get-Content build_info.txt
+          echo ""
+          echo "📦 Desplegando aplicación..."
+          Start-Sleep -Seconds 2
+          echo "🔧 Configurando servicios locales..."
+          Start-Sleep -Seconds 1
+          echo "🧪 Ejecutando tests de integración..."
+          Start-Sleep -Seconds 1
+          echo ""
+          echo "✅ Despliegue completado exitosamente en runner SELF-HOSTED"
+        shell: pwsh
+
+  # -------------------------------------------------------
+  # Job 3: Ejecuta en runner HOSTED (GitHub)
+  # Genera resumen final del pipeline
+  # -------------------------------------------------------
+  summary-hosted:
+    name: "📊 Resumen (GitHub Hosted)"
+    runs-on: ubuntu-latest
+    needs: [build-hosted, deploy-selfhosted]
+    if: always()
+    steps:
+      - name: Generar resumen del pipeline
+        run: |
+          echo "=========================================="
+          echo "📊 RESUMEN DEL PIPELINE HÍBRIDO"
+          echo "=========================================="
+          echo ""
+          echo "Job 1 (Build - Hosted):      ${{ needs.build-hosted.result }}"
+          echo "Job 2 (Deploy - Self-Hosted): ${{ needs.deploy-selfhosted.result }}"
+          echo ""
+          echo "Ejecutado por: ${{ github.actor }}"
+          echo "Rama: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Evento: ${{ github.event_name }}"
+          echo ""
+          echo "=========================================="
+          echo "✅ Pipeline híbrido finalizado"
+          echo "=========================================="

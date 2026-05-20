@@ -1,0 +1,92 @@
+# =============================================================================
+# Laboratorio 5 - Parte 3: Troubleshooting - Errores Deliberados
+# Este workflow contiene errores intencionales para practicar resolución
+# =============================================================================
+
+name: "Lab5 - Troubleshooting (Errores Deliberados)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_scenario:
+        description: "Escenario de error a probar"
+        required: true
+        type: choice
+        options:
+          - "all"
+          - "label-incorrecto"
+          - "dependencia-inexistente"
+          - "path-invalido"
+          - "error-permisos"
+
+jobs:
+  # -------------------------------------------------------
+  # ERROR 1: Label incorrecto
+  # El runner no existe con este label → Job se quedará en "queued"
+  # -------------------------------------------------------
+  error-label-incorrecto:
+    name: "❌ Error: Label Incorrecto"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'label-incorrecto' }}
+    runs-on: [self-hosted, nonexistent-label-xyz]
+    steps:
+      - name: Este paso nunca se ejecutará
+        run: echo "Si ves esto, el label fue encontrado (no debería pasar)"
+
+  # -------------------------------------------------------
+  # ERROR 2: Dependencia/Action inexistente
+  # Usa una action que no existe en el marketplace
+  # -------------------------------------------------------
+  error-dependencia-inexistente:
+    name: "❌ Error: Dependencia Inexistente"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'dependencia-inexistente' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Intentar usar action inexistente
+        uses: actions/this-action-does-not-exist@v99
+
+      - name: Este paso no se ejecutará
+        run: echo "No deberías ver esto"
+
+  # -------------------------------------------------------
+  # ERROR 3: Path inválido
+  # Intenta ejecutar un script que no existe en el repositorio
+  # -------------------------------------------------------
+  error-path-invalido:
+    name: "❌ Error: Path Inválido"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'path-invalido' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Intentar ejecutar script inexistente
+        run: |
+          echo "Intentando ejecutar script que no existe..."
+          bash ./scripts/deploy_production.sh
+
+      - name: Intentar acceder a archivo inexistente
+        run: |
+          echo "Intentando leer archivo de configuración..."
+          cat /ruta/que/no/existe/config.yml
+
+  # -------------------------------------------------------
+  # ERROR 4: Error de permisos
+  # Intenta escribir en un directorio sin permisos
+  # -------------------------------------------------------
+  error-permisos:
+    name: "❌ Error: Permisos"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'error-permisos' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Intentar escribir en directorio protegido
+        run: |
+          echo "Intentando escribir en /etc/..."
+          echo "test" > /etc/mi_config_app.conf
+
+      - name: Intentar cambiar permisos de sistema
+        run: |
+          echo "Intentando modificar permisos de archivos del sistema..."
+          chmod 777 /etc/passwd

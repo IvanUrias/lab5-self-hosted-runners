@@ -1,0 +1,26 @@
+# Archivos temporales
+*.tmp
+*.log
+*.bak
+
+# Archivos de sistema
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Archivos del runner
+_diag/
+_work/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+
+# Documento de texto extraído (temporal)
+lab5_content.txt
+
+# IDE
+.vscode/
+.idea/

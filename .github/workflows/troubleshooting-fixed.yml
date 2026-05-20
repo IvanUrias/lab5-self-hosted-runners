@@ -1,0 +1,122 @@
+# =============================================================================
+# Laboratorio 5 - Parte 3: Troubleshooting - Errores CORREGIDOS
+# Este workflow muestra las correcciones de los errores deliberados
+# =============================================================================
+
+name: "Lab5 - Troubleshooting (Errores Corregidos)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_scenario:
+        description: "Escenario corregido a probar"
+        required: true
+        type: choice
+        options:
+          - "all"
+          - "label-corregido"
+          - "dependencia-corregida"
+          - "path-corregido"
+          - "permisos-corregido"
+
+jobs:
+  # -------------------------------------------------------
+  # FIX 1: Label corregido
+  # Se usa el label correcto que coincide con el runner registrado
+  # -------------------------------------------------------
+  fix-label-corregido:
+    name: "✅ Fix: Label Corregido"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'label-corregido' }}
+    runs-on: [self-hosted, windows, lab5]
+    steps:
+      - name: Verificar runner correcto
+        run: |
+          echo "✅ El runner con labels [self-hosted, windows, lab5] fue encontrado"
+          echo "Runner: ${{ runner.name }}"
+          echo "OS: ${{ runner.os }}"
+        shell: pwsh
+
+  # -------------------------------------------------------
+  # FIX 2: Dependencia corregida
+  # Se usa una action que sí existe (actions/checkout@v4)
+  # -------------------------------------------------------
+  fix-dependencia-corregida:
+    name: "✅ Fix: Dependencia Corregida"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'dependencia-corregida' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Usar action correcta
+        uses: actions/checkout@v4
+
+      - name: Confirmar que la action funcionó
+        run: |
+          echo "✅ actions/checkout@v4 se ejecutó correctamente"
+          ls -la
+
+  # -------------------------------------------------------
+  # FIX 3: Path corregido
+  # Se crea el script antes de ejecutarlo y se usan paths válidos
+  # -------------------------------------------------------
+  fix-path-corregido:
+    name: "✅ Fix: Path Corregido"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'path-corregido' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Crear y ejecutar script correctamente
+        run: |
+          echo "Creando script antes de ejecutarlo..."
+          mkdir -p scripts
+          cat > scripts/deploy_production.sh << 'EOF'
+          #!/bin/bash
+          echo "🚀 Script de despliegue ejecutándose correctamente"
+          echo "Fecha: $(date)"
+          echo "Usuario: $(whoami)"
+          echo "Directorio: $(pwd)"
+          echo "✅ Despliegue simulado completado"
+          EOF
+          chmod +x scripts/deploy_production.sh
+          bash ./scripts/deploy_production.sh
+
+      - name: Leer archivo de configuración con path correcto
+        run: |
+          echo "Creando archivo de configuración..."
+          mkdir -p config
+          cat > config/app.yml << 'EOF'
+          app:
+            name: Lab5-App
+            version: 1.0.0
+            environment: production
+          EOF
+          echo "✅ Leyendo configuración:"
+          cat config/app.yml
+
+  # -------------------------------------------------------
+  # FIX 4: Permisos corregidos
+  # Se escribe en directorios donde el usuario tiene permisos
+  # -------------------------------------------------------
+  fix-permisos-corregido:
+    name: "✅ Fix: Permisos Corregidos"
+    if: ${{ github.event.inputs.test_scenario == 'all' || github.event.inputs.test_scenario == 'permisos-corregido' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Escribir en directorio con permisos adecuados
+        run: |
+          echo "Escribiendo configuración en directorio del workspace..."
+          mkdir -p ${{ github.workspace }}/config
+          echo "test_config=true" > ${{ github.workspace }}/config/mi_config_app.conf
+          echo "✅ Archivo de configuración creado correctamente:"
+          cat ${{ github.workspace }}/config/mi_config_app.conf
+
+      - name: Gestionar permisos correctamente
+        run: |
+          echo "Configurando permisos solo en archivos propios..."
+          touch mi_archivo.txt
+          chmod 644 mi_archivo.txt
+          ls -la mi_archivo.txt
+          echo "✅ Permisos configurados correctamente"
