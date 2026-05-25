@@ -1,0 +1,6 @@
+{
+  "name": "lab5-self-hosted-runners",
+  "description": "Laboratorio 5 - Self-hosted runners y troubleshooting",
+  "private": false,
+  "auto_init": false
+}
