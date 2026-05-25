@@ -20,18 +20,18 @@ OUTPUT_FILE = os.path.join(LAB_DIR, "Laboratorio 5 — Self-hosted runners y tro
 
 # Screenshot mapping
 SCREENSHOTS = {
-    "repo_created": "github_repo_created_1779285295862.png",
-    "settings_runners": "github_settings_runners_1779285314099.png",
-    "runner_config": "runner_config_terminal_1779285473033.png",
-    "runner_online": "runner_online_github_1779285491964.png",
-    "runner_running": "runner_running_terminal_1779285638708.png",
-    "hybrid_success": "hybrid_pipeline_success_1779285508639.png",
-    "error_label": "troubleshooting_label_error_1779285525854.png",
-    "error_dependency": "troubleshooting_dependency_error_1779285545420.png",
-    "error_path": "troubleshooting_path_error_1779285563315.png",
-    "error_permisos": "troubleshooting_permisos_error_1779285580358.png",
-    "fixed_success": "troubleshooting_fixed_success_1779285600860.png",
-    "logging_verbose": "logging_verbose_output_1779285622832.png",
+    "repo_created": "github_repo_created.png",
+    "settings_runners": "github_settings_runners.png",
+    "runner_config": "runner_config_terminal.png",
+    "runner_online": "runner_online_github.png",
+    "runner_running": "runner_running_terminal.png",
+    "hybrid_success": "hybrid_pipeline_success.png",
+    "error_label": "troubleshooting_label_error.png",
+    "error_dependency": "troubleshooting_dependency_error.png",
+    "error_path": "troubleshooting_path_error.png",
+    "error_permisos": "troubleshooting_permisos_error.png",
+    "fixed_success": "troubleshooting_fixed_success.png",
+    "logging_verbose": "logging_verbose_output.png",
 }
 
 
@@ -274,7 +274,7 @@ def build_document():
         "Sistema Operativo: Windows 11 Enterprise LTSC (Build 26100)",
         "Tipo de sistema: x64-based PC (VMware VM)",
         "Herramientas disponibles: Git 2.x, curl, PowerShell 5.1",
-        "Repositorio: https://github.com/IvanUrias/lab5-self-hosted-runners",
+        "Repositorio: https://github.com/lucas-arranz/lab5-self-hosted-runners",
         "Runner: GitHub Actions Runner v2.323.0 para Windows x64",
     ]
     for item in env_items:
@@ -311,7 +311,7 @@ def build_document():
     doc.add_paragraph(
         "El primer paso es crear un repositorio en GitHub donde se alojarán los workflows "
         "y al cual se asociará el runner self-hosted. Se ha creado el repositorio "
-        "IvanUrias/lab5-self-hosted-runners mediante la API de GitHub."
+        "lucas-arranz/lab5-self-hosted-runners mediante la API de GitHub."
     )
     doc.add_paragraph(
         "Comando utilizado para crear el repositorio mediante la API REST de GitHub:"
@@ -341,7 +341,7 @@ def build_document():
     )
 
     add_image_with_caption(doc, "repo_created",
-        "Repositorio IvanUrias/lab5-self-hosted-runners creado en GitHub con todos los "
+        "Repositorio lucas-arranz/lab5-self-hosted-runners creado en GitHub con todos los "
         "archivos del proyecto. Se observa la estructura de directorios con los workflows "
         "de GitHub Actions, scripts de diagnóstico y la documentación del proyecto."
     )
@@ -382,11 +382,11 @@ def build_document():
     add_code_block(doc,
         'curl -X POST -H "Accept: application/vnd.github+json" \\\n'
         '  -H "Authorization: Bearer <TOKEN>" \\\n'
-        '  "https://api.github.com/repos/IvanUrias/lab5-self-hosted-runners/actions/runners/registration-token"'
+        '  "https://api.github.com/repos/lucas-arranz/lab5-self-hosted-runners/actions/runners/registration-token"'
     )
     doc.add_paragraph("Configuración del runner:")
     add_code_block(doc,
-        '.\\config.cmd --url https://github.com/IvanUrias/lab5-self-hosted-runners \\\n'
+        '.\\config.cmd --url https://github.com/lucas-arranz/lab5-self-hosted-runners \\\n'
         '  --token AVYF4EMYDYILVSLOLL6DGDLKCQOSW \\\n'
         '  --name LAB5-Runner \\\n'
         '  --labels self-hosted,windows,lab5 \\\n'
