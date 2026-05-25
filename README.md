@@ -38,4 +38,4 @@ LAB 5/
 
 ## 👤 Autor
 
-Daniel Rodríguez García - daniel.rodriguezgarcia@tajamar365.com
+Lucas Arranz del Río - lucas.arranzdelrio@tajamar365.com

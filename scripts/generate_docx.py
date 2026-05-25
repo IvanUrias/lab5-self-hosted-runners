@@ -177,12 +177,12 @@ def build_document():
 
     author = doc.add_paragraph()
     author.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = author.add_run("Autor: Daniel Rodríguez García")
+    run = author.add_run("Autor: Lucas Arranz del Río")
     run.font.size = Pt(12)
 
     email = doc.add_paragraph()
     email.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = email.add_run("daniel.rodriguezgarcia@tajamar365.com")
+    run = email.add_run("lucas.arranzdelrio@tajamar365.com")
     run.font.size = Pt(11)
     run.font.color.rgb = RGBColor(0x0D, 0x47, 0xA1)
 
