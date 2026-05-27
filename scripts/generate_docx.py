@@ -41,28 +41,28 @@ def setup_styles(doc):
     style = doc.styles['Title']
     font = style.font
     font.size = Pt(28)
-    font.color.rgb = RGBColor(0x1A, 0x1A, 0x2E)
+    font.color.rgb = RGBColor(0x4A, 0x14, 0x8C)  # Morado Oscuro
     font.bold = True
 
     # Heading 1
     style = doc.styles['Heading 1']
     font = style.font
     font.size = Pt(18)
-    font.color.rgb = RGBColor(0x0D, 0x47, 0xA1)
+    font.color.rgb = RGBColor(0x4A, 0x14, 0x8C)  # Morado Oscuro
     font.bold = True
 
     # Heading 2
     style = doc.styles['Heading 2']
     font = style.font
     font.size = Pt(14)
-    font.color.rgb = RGBColor(0x1B, 0x5E, 0x20)
+    font.color.rgb = RGBColor(0x7E, 0x57, 0xC2)  # Morado Medio / Lavanda
     font.bold = True
 
     # Heading 3
     style = doc.styles['Heading 3']
     font = style.font
     font.size = Pt(12)
-    font.color.rgb = RGBColor(0xE6, 0x51, 0x00)
+    font.color.rgb = RGBColor(0xD8, 0x1B, 0x60)  # Orquídea
     font.bold = True
 
     # Normal
@@ -75,7 +75,7 @@ def setup_styles(doc):
 
 
 def add_image_with_caption(doc, image_key, caption, width=Inches(5.5)):
-    """Añade una imagen con su descripción debajo."""
+    """Añade una imagen con su comentario descriptivo debajo (sin prefijos ni cursivas)."""
     image_path = os.path.join(SCREENSHOTS_DIR, SCREENSHOTS.get(image_key, ""))
     
     if os.path.exists(image_path):
@@ -85,15 +85,17 @@ def add_image_with_caption(doc, image_key, caption, width=Inches(5.5)):
         run = p.add_run()
         run.add_picture(image_path, width=width)
         
-        # Añadir caption
+        # Añadir comentario descriptivo de la imagen
         caption_p = doc.add_paragraph()
         caption_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = caption_p.add_run(f"Figura: {caption}")
-        run.font.size = Pt(9)
-        run.font.italic = True
-        run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+        run = caption_p.add_run(caption)
+        run.font.name = 'Calibri'
+        run.font.size = Pt(11)
+        run.font.italic = False
+        run.font.bold = False
+        run.font.color.rgb = RGBColor(0x00, 0x00, 0x00)
         
-        # Explicación debajo
+        # Espacio debajo
         doc.add_paragraph()
     else:
         p = doc.add_paragraph(f"[Captura: {caption} - Imagen no disponible: {image_path}]")
@@ -102,15 +104,17 @@ def add_image_with_caption(doc, image_key, caption, width=Inches(5.5)):
 
 
 def add_code_block(doc, code, language="yaml"):
-    """Añade un bloque de código formateado."""
+    """Añade un bloque de código formateado con sangría lateral de 0.5 cm."""
     p = doc.add_paragraph()
+    p.paragraph_format.left_indent = Cm(0.5)
+    p.paragraph_format.right_indent = Cm(0.5)
+    
     run = p.add_run(code)
     run.font.name = 'Consolas'
     run.font.size = Pt(8.5)
+    
     # Set background shading
-    shading = p.paragraph_format
-    p_element = p._element
-    pPr = p_element.get_or_add_pPr()
+    pPr = p._element.get_or_add_pPr()
     shd = pPr.makeelement(qn('w:shd'), {
         qn('w:val'): 'clear',
         qn('w:color'): 'auto',
@@ -120,21 +124,28 @@ def add_code_block(doc, code, language="yaml"):
 
 
 def add_note_box(doc, text, note_type="info"):
-    """Añade un cuadro de nota/advertencia."""
+    """Añade un cuadro de nota/advertencia sin prefijos ni emoticonos, usando colores de la guía."""
     colors = {
-        "info": RGBColor(0x0D, 0x47, 0xA1),
-        "warning": RGBColor(0xE6, 0x51, 0x00),
-        "success": RGBColor(0x1B, 0x5E, 0x20),
-        "error": RGBColor(0xB7, 0x1C, 0x1C),
+        "info": RGBColor(0x4A, 0x14, 0x8C),      # Morado Oscuro
+        "warning": RGBColor(0xFF, 0xB3, 0x00),   # Oro/Naranja Muted
+        "success": RGBColor(0x2E, 0x7D, 0x32),   # Verde Muted
+        "error": RGBColor(0xB7, 0x1C, 0x1C),     # Rojo Muted
     }
-    icons = {
-        "info": "ℹ️",
-        "warning": "⚠️",
-        "success": "✅",
-        "error": "❌",
-    }
+    
     p = doc.add_paragraph()
-    run = p.add_run(f"{icons.get(note_type, '')} {text}")
+    p.paragraph_format.left_indent = Cm(0.5)
+    p.paragraph_format.right_indent = Cm(0.5)
+    
+    # Set background shading (light background for notes)
+    pPr = p._element.get_or_add_pPr()
+    shd = pPr.makeelement(qn('w:shd'), {
+        qn('w:val'): 'clear',
+        qn('w:color'): 'auto',
+        qn('w:fill'): 'F9F9F9'
+    })
+    pPr.append(shd)
+    
+    run = p.add_run(text)
     run.font.color.rgb = colors.get(note_type, RGBColor(0, 0, 0))
     run.font.bold = True
     run.font.size = Pt(10)
@@ -144,6 +155,13 @@ def build_document():
     """Construye el documento completo del laboratorio."""
     doc = Document()
     doc = setup_styles(doc)
+
+    # Configurar encabezado de página obligatorio en todo el documento
+    section = doc.sections[0]
+    header = section.header
+    hp = header.paragraphs[0]
+    hp.text = "Lucas Arranz del Rio"
+    hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
 
     # ==========================================
     # PORTADA
@@ -156,13 +174,13 @@ def build_document():
     run = title.add_run("Laboratorio 5")
     run.font.size = Pt(36)
     run.font.bold = True
-    run.font.color.rgb = RGBColor(0x0D, 0x47, 0xA1)
+    run.font.color.rgb = RGBColor(0x4A, 0x14, 0x8C)  # Morado Oscuro
 
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = subtitle.add_run("Self-hosted runners y troubleshooting")
     run.font.size = Pt(20)
-    run.font.color.rgb = RGBColor(0x42, 0x42, 0x42)
+    run.font.color.rgb = RGBColor(0x42, 0x42, 0x42)  # Gris Oscuro
 
     doc.add_paragraph()
 
@@ -170,21 +188,21 @@ def build_document():
     info.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = info.add_run("GitHub Actions — CI/CD")
     run.font.size = Pt(14)
-    run.font.color.rgb = RGBColor(0x75, 0x75, 0x75)
+    run.font.color.rgb = RGBColor(0x75, 0x75, 0x75)  # Gris
 
     doc.add_paragraph()
     doc.add_paragraph()
 
     author = doc.add_paragraph()
     author.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = author.add_run("Autor: Lucas Arranz del Río")
+    run = author.add_run("Lucas Arranz del Rio")  # Sin "Autor: " y con el nombre exacto
     run.font.size = Pt(12)
 
     email = doc.add_paragraph()
     email.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = email.add_run("lucas.arranzdelrio@tajamar365.com")
+    run = email.add_run("lucas.arranz@tajamar365.com")  # Correo correcto
     run.font.size = Pt(11)
-    run.font.color.rgb = RGBColor(0x0D, 0x47, 0xA1)
+    run.font.color.rgb = RGBColor(0x4A, 0x14, 0x8C)  # Morado Oscuro
 
     date = doc.add_paragraph()
     date.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -481,7 +499,7 @@ def build_document():
         p = doc.add_paragraph()
         run = p.add_run(f"{title}: ")
         run.font.bold = True
-        run.font.color.rgb = RGBColor(0x0D, 0x47, 0xA1)
+        run.font.color.rgb = RGBColor(0x4A, 0x14, 0x8C)  # Morado Oscuro
         p.add_run(desc)
         doc.add_paragraph()
 
@@ -500,17 +518,17 @@ def build_document():
         '  workflow_dispatch:\n\n'
         'jobs:\n'
         '  build-hosted:\n'
-        '    name: "🏗️ Build (GitHub Hosted)"\n'
+        '    name: "Build (GitHub Hosted)"\n'
         '    runs-on: ubuntu-latest\n'
         '    steps:\n'
         '      - uses: actions/checkout@v4\n'
         '      - name: Validar estructura del proyecto\n'
         '        run: |\n'
-        '          test -d ".github/workflows" && echo "✅ OK"\n'
+        '          test -d ".github/workflows" && echo "OK"\n'
         '      - name: Simular build\n'
         '        run: echo "build_status=success" >> build_info.txt\n\n'
         '  deploy-selfhosted:\n'
-        '    name: "🖥️ Deploy (Self-Hosted)"\n'
+        '    name: "Deploy (Self-Hosted)"\n'
         '    runs-on: [self-hosted, windows, lab5]\n'
         '    needs: build-hosted\n'
         '    steps:\n'
@@ -519,7 +537,7 @@ def build_document():
         '        run: systeminfo | Select-String "OS Name"\n'
         '        shell: pwsh\n\n'
         '  summary-hosted:\n'
-        '    name: "📊 Resumen (GitHub Hosted)"\n'
+        '    name: "Resumen (GitHub Hosted)"\n'
         '    runs-on: ubuntu-latest\n'
         '    needs: [build-hosted, deploy-selfhosted]\n'
         '    if: always()'
@@ -572,8 +590,8 @@ def build_document():
     doc.add_paragraph("Código del error:")
     add_code_block(doc,
         'error-label-incorrecto:\n'
-        '  name: "❌ Error: Label Incorrecto"\n'
-        '  runs-on: [self-hosted, nonexistent-label-xyz]  # ← Label que no existe\n'
+        '  name: "Error: Label Incorrecto"\n'
+        '  runs-on: [self-hosted, nonexistent-label-xyz]  # Label que no existe\n'
         '  steps:\n'
         '    - name: Este paso nunca se ejecutará\n'
         '      run: echo "No debería verse"'
@@ -593,8 +611,8 @@ def build_document():
     )
     add_code_block(doc,
         'fix-label-corregido:\n'
-        '  name: "✅ Fix: Label Corregido"\n'
-        '  runs-on: [self-hosted, windows, lab5]  # ← Labels correctos\n'
+        '  name: "Fix: Label Corregido"\n'
+        '  runs-on: [self-hosted, windows, lab5]  # Labels correctos\n'
         '  steps:\n'
         '    - name: Verificar runner correcto\n'
         '      run: echo "Runner: ${{ runner.name }}"'
@@ -688,7 +706,7 @@ def build_document():
         '        mkdir -p scripts\n'
         '        cat > scripts/deploy_production.sh << \'EOF\'\n'
         '        #!/bin/bash\n'
-        '        echo "🚀 Script ejecutándose correctamente"\n'
+        '        echo "Script ejecutándose correctamente"\n'
         '        EOF\n'
         '        chmod +x scripts/deploy_production.sh\n'
         '        bash ./scripts/deploy_production.sh'
@@ -848,7 +866,7 @@ def build_document():
         ("Computer Name", "DESKTOP-A6A47AH"),
         ("PowerShell Version", "5.1"),
         ("Git Version", "2.x"),
-        ("Conectividad GitHub API", "✅ Accesible (Status 200)"),
+        ("Conectividad GitHub API", "[EXITOSO] Accesible (Status 200)"),
     ]
     for i, (param, value) in enumerate(data):
         row = table.rows[i + 1].cells
@@ -1052,16 +1070,16 @@ def build_document():
 
     doc.add_heading("Entregables completados", level=2)
     deliverables = [
-        ("✅ Runner funcionando", "Runner LAB5-Runner registrado y operativo con labels self-hosted, windows, lab5"),
-        ("✅ Pipeline híbrido", "Workflow hybrid-pipeline.yml con 3 jobs (2 hosted + 1 self-hosted)"),
-        ("✅ Documento de troubleshooting", "5 errores documentados con causa raíz, capturas y resolución"),
-        ("✅ Explicación de riesgos seguridad", "Análisis detallado de 3 categorías de riesgos con medidas de mitigación"),
+        ("[COMPLETADO] Runner funcionando", "Runner LAB5-Runner registrado y operativo con labels self-hosted, windows, lab5"),
+        ("[COMPLETADO] Pipeline híbrido", "Workflow hybrid-pipeline.yml con 3 jobs (2 hosted + 1 self-hosted)"),
+        ("[COMPLETADO] Documento de troubleshooting", "5 errores documentados con causa raíz, capturas y resolución"),
+        ("[COMPLETADO] Explicación de riesgos seguridad", "Análisis detallado de 3 categorías de riesgos con medidas de mitigación"),
     ]
     for title, desc in deliverables:
         p = doc.add_paragraph()
         run = p.add_run(f"{title}: ")
         run.font.bold = True
-        run.font.color.rgb = RGBColor(0x1B, 0x5E, 0x20)
+        run.font.color.rgb = RGBColor(0x2E, 0x7D, 0x32)  # Verde Muted
         p.add_run(desc)
 
     # Save
